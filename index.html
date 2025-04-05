@@ -1,0 +1,1691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shazaan Raza | Terminal</title>
+    <style>
+        :root {
+            --bg-color: #1b1b1b;
+            --text-color: #ffb000;
+            --highlight-color: #ffd700;
+            --secondary-color: #ffb000;
+            --prompt-color: #ffb000;
+            --title-bg: #1b1b1b;
+            --border-color: #2b2b2b;
+        }
+        
+        body, html {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            color: var(--text-color);
+            font-family: "VT323", "Courier New", monospace;
+            height: 100%;
+            overflow: hidden;
+        }
+        
+        .terminal {
+            width: 96%;
+            height: 96%;
+            margin: 2%;
+            background: var(--bg-color);
+            border-radius: 20px;
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .terminal::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(
+                circle at center,
+                transparent 0%,
+                rgba(0,0,0,0.2) 100%
+            );
+            pointer-events: none;
+        }
+
+        .terminal-window {
+            height: 100%;
+            padding: 30px;
+            box-sizing: border-box;
+            overflow-y: auto;
+            position: relative;
+            text-shadow: 0 0 2px var(--text-color);
+        }
+        
+        #terminalOutput {
+            white-space: pre;
+            margin-bottom: 20px;
+            font-size: 16px;
+            line-height: 1.2;
+            letter-spacing: 0.5px;
+            font-family: "VT323", monospace;
+        }
+        
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 2px 0;
+        }
+        
+        .prompt {
+            color: var(--prompt-color);
+            margin-right: 8px;
+        }
+        
+        #commandInput {
+            flex-grow: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-color);
+            font-family: inherit;
+            font-size: 16px;
+            outline: none;
+            text-shadow: inherit;
+        }
+        
+        .ascii-art {
+            color: var(--highlight-color);
+            line-height: 1;
+            font-family: monospace;
+            white-space: pre;
+            font-size: 14px;
+            display: block;
+            letter-spacing: 0;
+            margin: 10px 0;
+        }
+        
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            height: 16px;
+            background-color: var(--text-color);
+            animation: blink 1s step-end infinite;
+            opacity: 0.7;
+        }
+        
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+
+        @media (max-width: 768px) {
+            .terminal {
+                width: 98%;
+                height: 98%;
+                margin: 1%;
+            }
+            .terminal-window {
+                padding: 15px;
+            }
+        }
+
+        /* Remove title bar as it wasn't present in the original */
+        .title-bar {
+            display: none;
+        }
+
+        /* Add specific style for the banner ASCII art */
+        .ascii-art.banner {
+            font-size: 12px;
+            line-height: 1;
+            font-family: "Courier New", monospace;
+            white-space: pre;
+            display: block;
+        }
+
+        /* Update Snake game styles */
+        .game-container {
+            display: none;
+            margin: 20px 0;
+            font-family: monospace;
+            background-color: var(--bg-color);
+            padding: 10px;
+            border: 1px solid var(--text-color);
+            text-align: center;
+        }
+
+        .game-board {
+            display: inline-block;
+            background-color: rgba(0, 0, 0, 0.2);
+            border: 2px solid var(--text-color);
+            padding: 5px;
+            margin: 10px auto;
+        }
+
+        .game-score {
+            color: var(--text-color);
+            margin-bottom: 10px;
+            font-family: "VT323", monospace;
+            font-size: 16px;
+            text-align: center;
+        }
+
+        .game-instructions {
+            color: var(--secondary-color);
+            margin-top: 10px;
+            font-family: "VT323", monospace;
+            font-size: 14px;
+            text-align: center;
+            padding: 10px;
+        }
+
+        /* Add ASCII button styles */
+        .ascii-button {
+            display: inline-block;
+            color: var(--text-color);
+            text-decoration: none;
+            font-family: monospace;
+            margin: 10px 0;
+            cursor: pointer;
+            padding: 10px;
+            transition: color 0.3s;
+        }
+
+        .ascii-button:hover {
+            color: var(--highlight-color);
+        }
+
+        .ascii-button pre {
+            margin: 0;
+            pointer-events: none;
+        }
+
+        /* Add Blackjack game styles */
+        .blackjack-table {
+            font-family: monospace;
+            color: var(--text-color);
+            padding: 20px;
+            border: 1px solid var(--text-color);
+            margin: 20px 0;
+            max-height: 90vh;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .dealer-hand, .player-hand {
+            margin: 0;
+            padding: 10px;
+            border: 1px solid var(--text-color);
+            background: rgba(0, 0, 0, 0.2);
+        }
+        
+        .hand-title {
+            margin-bottom: 10px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .cards-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .card {
+            margin: 0;
+            display: inline-block;
+        }
+        
+        .game-info {
+            margin: 0;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid var(--text-color);
+            background: rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+        
+        .game-controls {
+            margin: 0;
+            padding: 15px;
+            border: 1px solid var(--text-color);
+            background: rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .game-controls button {
+            background: rgba(255, 176, 0, 0.1);
+            border: 1px solid var(--text-color);
+            color: var(--text-color);
+            padding: 8px 20px;
+            margin: 0;
+            cursor: pointer;
+            font-family: monospace;
+            min-width: 100px;
+            transition: all 0.3s ease;
+        }
+        
+        .game-controls button:hover {
+            background: var(--text-color);
+            color: var(--bg-color);
+        }
+        
+        .game-controls input {
+            background: rgba(255, 176, 0, 0.1);
+            border: 1px solid var(--text-color);
+            color: var(--text-color);
+            padding: 8px;
+            font-family: monospace;
+            width: 80px;
+            text-align: center;
+        }
+        
+        .button-container {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            width: 100%;
+        }
+        
+        .game-over {
+            text-align: center;
+            padding: 20px;
+        }
+    </style>
+
+    <!-- Add VT323 font for more authentic terminal look -->
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="terminal">
+        <div class="title-bar">
+            <span class="title-bar-text">visitor@shazaan: ~</span>
+        </div>
+        <div class="terminal-window">
+            <div id="terminalOutput"></div>
+            <div class="command-line">
+                <span class="prompt">visitor@shazaan:~$</span>
+                <input type="text" id="commandInput" autofocus spellcheck="false">
+                <span class="cursor"></span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const terminal = document.getElementById('terminalOutput');
+        const commandInput = document.getElementById('commandInput');
+        
+        // ASCII art for name - updated style
+        const nameAscii = `
+███████╗██╗  ██╗ █████╗ ███████╗ █████╗  █████╗ ███╗   ██╗
+██╔════╝██║  ██║██╔══██╗╚══███╔╝██╔══██╗██╔══██╗████╗  ██║
+███████╗███████║███████║  ███╔╝ ███████║███████║██╔██╗ ██║
+╚════██║██╔══██║██╔══██║ ███╔╝  ██╔══██║██╔══██║██║╚██╗██║
+███████║██║  ██║██║  ██║███████╗██║  ██║██║  ██║██║ ╚████║
+╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝
+
+██████╗  █████╗ ███████╗ █████╗ 
+██╔══██╗██╔══██╗╚══███╔╝██╔══██╗
+██████╔╝███████║  ███╔╝ ███████║
+██╔══██╗██╔══██║ ███╔╝  ██╔══██║
+██║  ██║██║  ██║███████╗██║  ██║
+╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝`;
+
+        // Virgil Abloh quotes
+        const virgilQuotes = [
+            "I'm not a designer, I'm a thinker.",
+            "The future is an open sky for those who have the wings of curiosity.",
+            "You can make a case that creativity now is more important than knowledge.",
+            "Everything I do is for the 17-year-old version of myself.",
+            "Streetwear is a phenomenon that combines culture, music, and fashion.",
+            "I don't believe in disciplines. I believe in projects.",
+            "High fashion is about innovation and pushing forward the barriers of what's possible.",
+            "The irony of being called an overnight success is that it takes almost a decade to make it overnight.",
+            "I don't believe in prescription glasses. I believe in seeing things differently.",
+            "Art is an intellectual offering that shouldn't be dumbed down for any reason.",
+            "I like when things are hard; I'm in love with the process.",
+            "Fashion isn't really about clothes; it's about life.",
+            "The minute you think the past is better, your present is second-hand, and yourself becomes vintage.",
+            "Design is the freshest scam. We are all scammers, we are all putting things into the world.",
+            "The role of the creator is that of a good listener, to understand what's being said and to understand what's not being said.",
+            "Being first means you set the trend: the architecture of a whole genre or realm.",
+            "Inspiration is one of the most important assets in life and it should be treasured.",
+            "Luxury is building things that didn't exist before.",
+            "I want to innovate; I want to make things that haven't been made.",
+            "My work is just an output of me processing my reality.",
+            "A shoe is like a sculpture. There's so many ways to manipulate fabric.",
+            "You can't do epic shit with basic people.",
+            "My goal is to communicate, to be a bridge between generations.",
+            "It's not about being seen, it's about being remembered.",
+            "Make no small plans; they have no magic to stir men's blood.",
+            "If I've done my job correctly, then I disappear.",
+            "There is nothing more inspiring than human potential.",
+            "By defining the grey area between black and white, I am creating a new space.",
+            "To me, luxury is a matter of inspiration, feelings, and dreams.",
+            "There's nothing more powerful than an idea whose time has come.",
+            "Never forget why you started, and your mission can be completed.",
+            "Creating is about shifting the way we see the world.",
+            "If your vision doesn't scare you, then both your vision and your eyes are not open.",
+            "What's my DNA? It's that I believe in modernity.",
+            "The best ideas come as jokes. Make your thinking as funny as possible.",
+            "To me, you can't take away the artistry of fashion, no matter what happens in the world.",
+            "I don't want to be a designer; I want to be a creative person.",
+            "Good design can be planned but great design just happens.",
+            "My ultimate goal is to make a product that people love and cherish.",
+            "You have to know the past to know the future.",
+            "The principle of my brand is that the world is shrinking and the creativity is expanding.",
+            "I'm not designing clothes, I'm creating a narrative.",
+            "I'm not selling clothes, I'm communicating a lifestyle.",
+            "I'm part of a generation that has nothing to say, so we want to make a difference.",
+            "We're here to disrupt, destroy, and rebuild.",
+            "Creativity means breaking out of established patterns to look at things in a different way.",
+            "The power of design is it can morph into whatever context you put it in.",
+            "I want to use design to provoke people's thoughts to think about the bigger picture.",
+            "It's not just about brand synergy; it's about real connections.",
+            "My brand started from emotion and intuition."
+        ];
+
+        // Kanye lyrics
+        const kanyeLyrics = [
+            "Yeezy, Yeezy, Yeezy just jumped over Jumpman.",
+            "I feel like Pablo when I'm workin' on my shoes.",
+            "I'm a monster, I'm a maven, I know this world is changing.",
+            "I'm not a businessman; I'm a business, man!",
+            "Last week I was in my other other Benz.",
+            "Couldn't afford a car so she named her daughter Alexis.",
+            "They say 'Oh you graduated?' No, I decided I was finished.",
+            "You see there's leaders, and there's followers, but I'd rather be a dick than a swallower.",
+            "For me, givin' up is way harder than tryin'.",
+            "Mayonnaise-colored Benz, I push Miracle Whips.",
+            "And I'll just blame everything on you, at least you know that's what I'm good at.",
+            "Screams from the haters, got a nice ring to it. I guess every superhero need his theme music.",
+            "They say good things come to those who wait, so imma be at least about an hour late.",
+            "I'm tryna right my wrongs, but it's funny, them same wrongs helped me write this song.",
+            "I'm like a fly Malcolm X, buy any jeans necessary.",
+            "What if Kanye made a song about Kanye? Called 'I Miss The Old Kanye,' man that would be so Kanye.",
+            "I told God I'd be back in a second, man it's so hard not to act reckless.",
+            "I'm livin' in the future so the present is my past, my presence is a present, kiss my ass.",
+            "Couldn't tell you much about the fam though, I just showed up for the yams though.",
+            "I'm just tryna change the color on your mood ring.",
+            "On this road I find these scars I left behind; Heaven lift me up.",
+            "She in the mirror dancin' so sleazy, I get a call like 'Where are you Yeezy?'",
+            "They say I was the abomination of Obama's nation.",
+            "I know I got angels watchin' me from the other side.",
+            "Two words, United States, no love, no brakes, low brow, high stakes.",
+            "Wake up Mr. West! Oh, he's up!",
+            "I guess we'll never know what Harvard gets us, but seeing my family have it all took the place of that desire for diplomas on the wall.",
+            "Unbreakable, what you thought they'd call me Mr. Glass?",
+            "I made Sunday Candy, I'm never going to hell. I met Kanye West, I'm never going to fail.",
+            "In my past, you on the other side of the glass of my memory's museum.",
+            "We wasn't s'posed to make it past 25, jokes on you, we still alive.",
+            "But I'm a champion, so I turned tragedy to triumph.",
+            "Reach for the stars so if you fall, you land on a cloud.",
+            "I guess it's hard to decipher all of the bills, especially when you got family members on payroll.",
+            "Five beats a day for three summers, that's a different world like Cree Summers.",
+            "They say 'He going crazy and we seen this before,' but I'm doing pretty good as far as geniuses go.",
+            "Before anybody wanted K-West beats, me and my girl split the buffet at KFC.",
+            "You know how long I've been on ya? Since Prince was on Apollonia.",
+            "And I heard 'em say, nothin' ever promised tomorrow today.",
+            "I know it's past visiting hours, but can I please give her these flowers?",
+            "To whom much is given, much is tested.",
+            "24/7, 365, pussy stays on my mind.",
+            "I'm way too black to burn from sun rays.",
+            "Luxury rap, the Hermes of verses.",
+            "We at the table screaming, 'The other side, they jealous!'",
+            "If you admire somebody, you should go ahead and tell 'em. People never get the flowers while they can still smell 'em.",
+            "And the weather so breezy, man why can't life always be this easy?",
+            "If I ever let my head down, it will be just to admire my shoes.",
+            "I ain't here to argue about his facial features. Or here to convert atheists into believers.",
+            "I'm just saying, how my daughter gonna have a better car than me?"
+        ];
+
+        // Function to generate ASCII art for any name
+        function generateAsciiArt(name) {
+            const letters = {
+                'a': [
+                    ' █████╗ ',
+                    '██╔══██╗',
+                    '███████║',
+                    '██╔══██║',
+                    '██║  ██║',
+                    '╚═╝  ╚═╝'
+                ],
+                'b': [
+                    '██████╗ ',
+                    '██╔══██╗',
+                    '██████╔╝',
+                    '██╔══██╗',
+                    '██████╔╝',
+                    '╚═════╝ '
+                ],
+                'c': [
+                    ' ██████╗',
+                    '██╔════╝',
+                    '██║     ',
+                    '██║     ',
+                    '╚██████╗',
+                    ' ╚═════╝'
+                ],
+                'd': [
+                    '██████╗ ',
+                    '██╔══██╗',
+                    '██║  ██║',
+                    '██║  ██║',
+                    '██████╔╝',
+                    '╚═════╝ '
+                ],
+                'e': [
+                    '███████╗',
+                    '██╔════╝',
+                    '█████╗  ',
+                    '██╔══╝  ',
+                    '███████╗',
+                    '╚══════╝'
+                ],
+                'f': [
+                    '███████╗',
+                    '██╔════╝',
+                    '█████╗  ',
+                    '██╔══╝  ',
+                    '██║     ',
+                    '╚═╝     '
+                ],
+                'g': [
+                    ' ██████╗ ',
+                    '██╔════╝ ',
+                    '██║  ███╗',
+                    '██║   ██║',
+                    '╚██████╔╝',
+                    ' ╚═════╝ '
+                ],
+                'h': [
+                    '██╗  ██╗',
+                    '██║  ██║',
+                    '███████║',
+                    '██╔══██║',
+                    '██║  ██║',
+                    '╚═╝  ╚═╝'
+                ],
+                'i': [
+                    '██╗',
+                    '██║',
+                    '██║',
+                    '██║',
+                    '██║',
+                    '╚═╝'
+                ],
+                'j': [
+                    '     ██╗',
+                    '     ██║',
+                    '     ██║',
+                    '██   ██║',
+                    '╚█████╔╝',
+                    ' ╚════╝ '
+                ],
+                'k': [
+                    '██╗  ██╗',
+                    '██║ ██╔╝',
+                    '█████╔╝ ',
+                    '██╔═██╗ ',
+                    '██║  ██╗',
+                    '╚═╝  ╚═╝'
+                ],
+                'l': [
+                    '██╗     ',
+                    '██║     ',
+                    '██║     ',
+                    '██║     ',
+                    '███████╗',
+                    '╚══════╝'
+                ],
+                'm': [
+                    '███╗   ███╗',
+                    '████╗ ████║',
+                    '██╔████╔██║',
+                    '██║╚██╔╝██║',
+                    '██║ ╚═╝ ██║',
+                    '╚═╝     ╚═╝'
+                ],
+                'n': [
+                    '███╗  ██╗',
+                    '████╗ ██║',
+                    '██╔██╗██║',
+                    '██║╚████║',
+                    '██║ ╚███║',
+                    '╚═╝  ╚══╝'
+                ],
+                'o': [
+                    ' ██████╗ ',
+                    '██╔═══██╗',
+                    '██║   ██║',
+                    '██║   ██║',
+                    '╚██████╔╝',
+                    ' ╚═════╝ '
+                ],
+                'p': [
+                    '██████╗ ',
+                    '██╔══██╗',
+                    '██████╔╝',
+                    '██╔═══╝ ',
+                    '██║     ',
+                    '╚═╝     '
+                ],
+                'q': [
+                    ' ██████╗ ',
+                    '██╔═══██╗',
+                    '██║   ██║',
+                    '██║▄▄ ██║',
+                    '╚██████╔╝',
+                    ' ╚══▀▀═╝ '
+                ],
+                'r': [
+                    '██████╗ ',
+                    '██╔══██╗',
+                    '██████╔╝',
+                    '██╔══██╗',
+                    '██║  ██║',
+                    '╚═╝  ╚═╝'
+                ],
+                's': [
+                    '███████╗',
+                    '██╔════╝',
+                    '███████╗',
+                    '╚════██║',
+                    '███████║',
+                    '╚══════╝'
+                ],
+                't': [
+                    '████████╗',
+                    '╚══██╔══╝',
+                    '   ██║   ',
+                    '   ██║   ',
+                    '   ██║   ',
+                    '   ╚═╝   '
+                ],
+                'u': [
+                    '██╗   ██╗',
+                    '██║   ██║',
+                    '██║   ██║',
+                    '██║   ██║',
+                    '╚██████╔╝',
+                    ' ╚═════╝ '
+                ],
+                'v': [
+                    '██╗   ██╗',
+                    '██║   ██║',
+                    '██║   ██║',
+                    '╚██╗ ██╔╝',
+                    ' ╚████╔╝ ',
+                    '  ╚═══╝  '
+                ],
+                'w': [
+                    '██╗    ██╗',
+                    '██║    ██║',
+                    '██║ █╗ ██║',
+                    '██║███╗██║',
+                    '╚███╔███╔╝',
+                    ' ╚══╝╚══╝ '
+                ],
+                'x': [
+                    '██╗  ██╗',
+                    '╚██╗██╔╝',
+                    ' ╚███╔╝ ',
+                    ' ██╔██╗ ',
+                    '██╔╝ ██╗',
+                    '╚═╝  ╚═╝'
+                ],
+                'y': [
+                    '██╗   ██╗',
+                    '╚██╗ ██╔╝',
+                    ' ╚████╔╝ ',
+                    '  ╚██╔╝  ',
+                    '   ██║   ',
+                    '   ╚═╝   '
+                ],
+                'z': [
+                    '███████╗',
+                    '╚══███╔╝',
+                    '  ███╔╝ ',
+                    ' ███╔╝  ',
+                    '███████╗',
+                    '╚══════╝'
+                ],
+                ' ': [
+                    '      ',
+                    '      ',
+                    '      ',
+                    '      ',
+                    '      ',
+                    '      '
+                ]
+            };
+            
+            const nameLower = name.toLowerCase();
+            let asciiArt = ['', '', '', '', '', ''];
+            
+            // Build each line of the ASCII art
+            for (let char of nameLower) {
+                const letterArt = letters[char] || letters[' '];
+                for (let i = 0; i < 6; i++) {
+                    asciiArt[i] += letterArt[i] + ' ';
+                }
+            }
+            
+            // Join all lines with newlines
+            return asciiArt.join('\n');
+        }
+
+        // Function to play Kanye music
+        function playKanyeMusic() {
+            const audio = new Audio('ww3.mp3');
+            audio.play().catch(error => {
+                console.log('Error playing audio:', error);
+                terminal.innerHTML += '\nError: Could not play the music file. Make sure kanye.mp3 exists in the same directory.\n';
+            });
+        }
+
+        // Move style element creation to the top with other styles
+        const blackjackStyles = `
+            .blackjack-table {
+                font-family: monospace;
+                color: var(--text-color);
+                padding: 20px;
+                border: 1px solid var(--text-color);
+                margin: 20px 0;
+                max-height: 80vh;
+                overflow-y: auto;
+            }
+            
+            .dealer-hand, .player-hand {
+                margin: 10px 0;
+            }
+
+            .hand-title {
+                margin-bottom: 5px;
+                font-weight: bold;
+            }
+
+            .cards-container {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+
+            .card {
+                margin: 0;
+                display: inline-block;
+            }
+            
+            .game-info {
+                margin: 10px 0;
+                font-size: 16px;
+                border-top: 1px solid var(--text-color);
+                padding-top: 10px;
+            }
+            
+            .game-controls {
+                margin: 10px 0;
+                border-top: 1px solid var(--text-color);
+                padding-top: 10px;
+            }
+            
+            .game-controls button {
+                background: transparent;
+                border: 1px solid var(--text-color);
+                color: var(--text-color);
+                padding: 5px 10px;
+                margin: 5px;
+                cursor: pointer;
+                font-family: monospace;
+            }
+            
+            .game-controls button:hover {
+                background: var(--text-color);
+                color: var(--bg-color);
+            }
+            
+            .game-controls input {
+                background: transparent;
+                border: 1px solid var(--text-color);
+                color: var(--text-color);
+                padding: 5px;
+                font-family: monospace;
+                width: 60px;
+            }
+            
+            .game-over {
+                text-align: center;
+                padding: 20px;
+            }
+        `;
+
+        // Add styles to the document
+        document.head.insertAdjacentHTML('beforeend', `<style>${blackjackStyles}</style>`);
+
+        // Initialize global variables
+        let hiddenCommandsUnlocked = false;
+        const HIDDEN_PASSWORD = 'kanyewestlover911';
+        let blackjackGame = null;
+
+        // Content data
+        const contentData = {
+            intro: `${nameAscii}
+< Software Engineer | Content Creator | Designer | Marketer >
+
+"${virgilQuotes[0]}"
+
+Type 'help' to see available commands.`,
+
+            help: `
+Available commands:
+    about       - Learn about Shazaan
+    skills      - View technical and creative skills
+    projects    - Explore featured projects
+    experience  - Professional background
+    contact     - Get in touch
+    clear       - Clear the terminal
+    socials     - View social media links
+    resume      - Download my resume
+    links       - Show ASCII link buttons
+    hidden      - Access hidden commands (password protected)`,
+
+            hidden: `
+Enter password to unlock hidden commands:`,
+
+            hiddenHelp: `
+Hidden commands unlocked!
+
+Additional commands available:
+    quote       - Display random Virgil Abloh quote
+    whoami      - Who are you?
+    banner      - Display ASCII art banner
+    snake       - Play classic Snake game
+    lyric       - Display random Kanye West lyric
+    ye         - Play Kanye West music
+    blackjack   - Play Blackjack with ASCII cards
+    ascii       - Generate ASCII art from any name`,
+
+            hiddenDenied: `
+Incorrect password. Access denied.
+Type 'hidden' to try again.`,
+
+            about: `
+< ABOUT SHAZAAN RAZA >
+
+Welcome to my digital space! I'm Shazaan Raza, a Content Creator, Designer, and Web Developer. My journey in computer science at Illinois Tech has fueled my passion for blending tech and creativity to create cool digital experiences.
+
+Inspiration & Creativity I'm hugely inspired by Virgil Abloh's innovative approach to fashion and design. I try to bring a bit of that originality and forward-thinking to everything I do, from website development to social media campaigns.
+
+Music & Lifestyle Music drives my creativity and shapes my design aesthetic. Check out my Spotify playlist to see what tunes keep me going.
+
+Connect & Collaborate Looking for a fresh perspective on your next project? Let's connect and make something awesome together.`,
+
+            skills: `
+< SKILLS & EXPERTISE >
+
+💻 PROGRAMMING LANGUAGES
+- C++       | High-performance applications
+- Python    | Data science, automation
+- JavaScript | Web development, interactivity
+- HTML/CSS  | Front-end design
+- SQL       | Database management
+- Racket    | Functional programming
+- RISC-V    | Assembly language
+
+📈 MARKETING
+- Market Research    | Consumer behavior analysis
+- Campaign Strategy  | Planning and execution
+- Trend Analysis     | Forecasting market movements
+
+📲 SOCIAL MEDIA MANAGEMENT
+- Content Creation   | Engaging multimedia content
+- Brand Relations    | Partnerships and collaborations
+- Audience Engagement| Community building
+
+⚒ TOOLS & TECHNOLOGIES
+- Git               | Version control
+- CapCut            | Video editing
+- Adobe InDesign    | Layout design
+- Adobe Illustrator | Graphic design
+
+🔬 DATA & ML
+- Pandas & NumPy    | Data manipulation
+- Matplotlib        | Data visualization
+- Scikit-learn      | Machine learning models
+
+💻 WEB DEVELOPMENT
+- Responsive Design | Mobile and desktop
+- UI/UX            | User interface and experience
+- Full-Stack Development | Client and server-side`,
+
+            projects: `
+< FEATURED PROJECTS >
+
+
+
+> NBA Predictor
+  Description: Machine learning model that predicts NBA game outcomes.
+  Technologies: Python, Pandas, Scikit-Learn
+  Features: Data analysis, model training
+
+> TikTok Feedback Form Bot
+  Description: Automated bot for filling out TikTok feedback forms.
+  Technologies: Python
+  Features: Automation, data collection
+
+> YouTube Downloader
+  Description: Tool for downloading YouTube videos in various formats.
+  Technologies: Roff, YouTube API
+  Features: Video downloading, API integration
+
+> Yeezer – Kanye West Song Game
+  Description: Interactive web game for guessing Kanye West songs.
+  Technologies: JavaScript, HTML/CSS, Spotify API
+  Features: Real-time music playback, user interaction
+
+  > Artist-Wordle
+  Description: A web application where users guess artist names like in Wordle.
+  Technologies: JavaScript, HTML/CSS
+  Features: Game logic, user interface design
+
+> Yeezy Marketing Campaign
+  Description: Social media campaign for Yeezy's Vultures 1 and YZY PODS.
+  Technologies: Social Media, Analytics
+  Features: Content strategy, influencer marketing, engagement analysis`,
+
+            experience: `
+< EXPERIENCE >
+
+> Content Creator/Designer
+  October 2022 – Present | Self-Employed, Remote
+  - Grew social media accounts to 2M+ followers through data-driven content strategies and engagement
+  - Created daily content and designed merchandise, collaborating with teams to optimize based on feedback
+  - Produced visual content using CapCut, Adobe Suite for personal and client projects
+
+> Marketing Assistant/Designer
+  November 2023 – March 2024 | Yeezy, Remote
+  - Identified key influencers for Yeezy merchandise promotion, increasing brand visibility
+  - Collaborated with creative teams on marketing materials and promotional content
+  - Ensured consistent brand messaging across digital platforms
+
+> Web Developer Intern
+  January 2023 – August 2023 | Azlan Technologies, Remote
+  - Developed and launched responsive websites utilizing HTML, CSS, JavaScript, and React.
+  - Collaborated with teams to meet deadlines and enhance site performance, achieving a 15% increase in user engagement.
+  - Implemented UI/UX principles to ensure optimal navigability and user experience.`,
+
+            contact: `
+< CONTACT >
+
+Feel free to reach out to me:
+- Email: shazaanraza123@gmail.com
+- LinkedIn: linkedin.com/in/muhammedraza8
+- GitHub: github.com/shazaanraza123
+- Number: 630-675-3263
+
+Type 'socials' to see my social media links.`,
+
+            socials: `
+< SOCIAL MEDIA >
+
+Connect with me online:
+- Twitter: @cryptozahs
+- Instagram: @shaz5l
+- TikTok: @shazgotagun `,
+
+            quote: () => {
+                const randomIndex = Math.floor(Math.random() * virgilQuotes.length);
+                return `"${virgilQuotes[randomIndex]}" - Virgil Abloh`;
+            },
+
+            lyric: () => {
+                const randomIndex = Math.floor(Math.random() * kanyeLyrics.length);
+                return `"${kanyeLyrics[randomIndex]}" - Kanye West`;
+            },
+
+            whoami: `You are a visitor exploring Shazaan's terminal website. Welcome!`,
+
+            banner: nameAscii,
+
+            ls: `
+home/
+├── about.txt
+├── skills.md
+├── projects/
+│   ├── artist-wordle/
+│   ├── nba-predictor/
+│   ├── tiktok-bot/
+│   └── more...
+├── experience.json
+└── contact.txt`,
+
+            resume: `
+< RESUME >
+
+Accessing resume...
+Opening FinalRes.pdf in a new tab...`,
+
+            snake: `
+< 404 ERROR >
+
+    ____    _____   _____   _  _   
+   / __ \  |  __ \ |  ___| | || |  
+  | |  | | | |  | ||  _|   | || |_ 
+  | |__| | | |__| || |___  |__   _|
+   \____/  |_____/ |_____|    |_|  
+   
+Snake game is currently under construction.
+Will be back up and running soon!
+
+Type 'help' to see other available commands.`,
+
+            links: `
+< QUICK LINKS >
+
+${createAsciiButton('GITHUB', 'https://github.com/shazaanraza123')}
+
+${createAsciiButton('LINKEDIN', 'https://linkedin.com/in/muhamemdraza8')}
+
+${createAsciiButton('PORTFOLIO', 'https://shazaanraza.netlify.app')}
+
+${createAsciiButton('TWITTER', 'https://twitter.com/crytpozahs')}
+
+Type 'help' to see all commands.`,
+
+            unknown: `Command not found. Type 'help' to see available commands.`,
+
+            blackjack: `
+< BLACKJACK >
+
+Loading blackjack game...
+Starting balance: $100
+Good luck!`
+        };
+
+        // Function to simulate typing effect
+        function typeEffect(text, element, speed = 10) {
+            return new Promise(resolve => {
+                let i = 0;
+                const interval = setInterval(() => {
+                    element.innerHTML += text.charAt(i);
+                    i++;
+                    if (i > text.length - 1) {
+                        clearInterval(interval);
+                        resolve();
+                    }
+                    element.scrollTop = element.scrollHeight;
+                }, speed);
+            });
+        }
+
+        // Add Snake game implementation
+        class SnakeGame {
+            constructor(container, width = 20, height = 15) {
+                this.width = width;
+                this.height = height;
+                this.container = container;
+                this.tileSize = 15;
+                this.running = false;
+                this.gameActive = true;
+                
+                this.snake = [{x: 10, y: 7}];
+                this.direction = {x: 1, y: 0};
+                this.food = {x: 15, y: 7};
+                this.score = 0;
+                
+                // Clear any existing content
+                this.container.innerHTML = '';
+                this.setupGame();
+                
+                // Initial draw
+                this.draw();
+            }
+            
+            setupGame() {
+                // Create score display
+                this.scoreElement = document.createElement('div');
+                this.scoreElement.className = 'game-score';
+                this.scoreElement.textContent = 'Score: 0';
+                this.container.appendChild(this.scoreElement);
+                
+                // Create canvas
+                this.canvas = document.createElement('canvas');
+                this.canvas.width = this.width * this.tileSize;
+                this.canvas.height = this.height * this.tileSize;
+                this.canvas.className = 'game-board';
+                this.container.appendChild(this.canvas);
+                this.ctx = this.canvas.getContext('2d');
+                
+                // Add instructions
+                const instructions = document.createElement('div');
+                instructions.className = 'game-instructions';
+                instructions.innerHTML = 'Use arrow keys to move. Press any arrow key to start.<br>Press ESC to exit game.';
+                this.container.appendChild(instructions);
+                
+                // Setup keyboard controls
+                this.keyHandler = this.handleKeyPress.bind(this);
+                document.addEventListener('keydown', this.keyHandler);
+
+                // Show the game container
+                this.container.style.display = 'block';
+
+                // Initial draw to show starting position
+                this.draw();
+            }
+            
+            handleKeyPress(event) {
+                // Prevent terminal input while game is active
+                if (this.gameActive) {
+                    event.preventDefault();
+                }
+
+                // Handle ESC key to exit game
+                if (event.key === 'Escape') {
+                    this.exitGame();
+                    return;
+                }
+
+                const keyActions = {
+                    'ArrowUp': {x: 0, y: -1},
+                    'ArrowDown': {x: 0, y: 1},
+                    'ArrowLeft': {x: -1, y: 0},
+                    'ArrowRight': {x: 1, y: 0}
+                };
+                
+                if (keyActions[event.key]) {
+                    // Start game if not running
+                    if (!this.running && this.gameActive) {
+                        this.start();
+                    }
+                    
+                    // Update direction if game is active
+                    if (this.gameActive) {
+                        const newDir = keyActions[event.key];
+                        // Prevent 180-degree turns
+                        if (this.direction.x !== -newDir.x || this.direction.y !== -newDir.y) {
+                            this.direction = newDir;
+                        }
+                    }
+                }
+            }
+            
+            exitGame() {
+                this.gameActive = false;
+                this.running = false;
+                document.removeEventListener('keydown', this.keyHandler);
+                this.container.innerHTML = '<div class="game-score">Game Exited. Final Score: ' + this.score + '</div>';
+                // Re-enable terminal input
+                const commandInput = document.getElementById('commandInput');
+                if (commandInput) {
+                    commandInput.focus();
+                }
+            }
+            
+            start() {
+                if (!this.running && this.gameActive) {
+                    this.running = true;
+                    this.gameLoop();
+                }
+            }
+            
+            gameLoop() {
+                if (!this.running || !this.gameActive) return;
+                
+                // Move snake
+                const head = {
+                    x: (this.snake[0].x + this.direction.x + this.width) % this.width,
+                    y: (this.snake[0].y + this.direction.y + this.height) % this.height
+                };
+                
+                // Check collision with self
+                if (this.snake.some(segment => segment.x === head.x && segment.y === head.y)) {
+                    this.gameOver();
+                    return;
+                }
+                
+                this.snake.unshift(head);
+                
+                // Check if food is eaten
+                if (head.x === this.food.x && head.y === this.food.y) {
+                    this.score += 10;
+                    this.generateFood();
+                } else {
+                    this.snake.pop();
+                }
+                
+                this.draw();
+                
+                // Continue game loop
+                if (this.running) {
+                    setTimeout(() => this.gameLoop(), 100);
+                }
+            }
+            
+            generateFood() {
+                do {
+                    this.food = {
+                        x: Math.floor(Math.random() * this.width),
+                        y: Math.floor(Math.random() * this.height)
+                    };
+                } while (this.snake.some(segment => 
+                    segment.x === this.food.x && segment.y === this.food.y));
+            }
+            
+            draw() {
+                if (!this.ctx) return;
+                
+                // Clear canvas with background color
+                this.ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Draw grid lines
+                this.ctx.strokeStyle = 'rgba(255, 176, 0, 0.1)';
+                for (let i = 0; i <= this.width; i++) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(i * this.tileSize, 0);
+                    this.ctx.lineTo(i * this.tileSize, this.canvas.height);
+                    this.ctx.stroke();
+                }
+                for (let i = 0; i <= this.height; i++) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, i * this.tileSize);
+                    this.ctx.lineTo(this.canvas.width, i * this.tileSize);
+                    this.ctx.stroke();
+                }
+                
+                // Draw snake
+                this.ctx.fillStyle = '#ffb000';
+                this.snake.forEach(segment => {
+                    this.ctx.fillRect(
+                        segment.x * this.tileSize,
+                        segment.y * this.tileSize,
+                        this.tileSize - 1,
+                        this.tileSize - 1
+                    );
+                });
+                
+                // Draw food
+                this.ctx.fillStyle = '#ffd700';
+                this.ctx.fillRect(
+                    this.food.x * this.tileSize,
+                    this.food.y * this.tileSize,
+                    this.tileSize - 1,
+                    this.tileSize - 1
+                );
+                
+                // Update score
+                this.scoreElement.textContent = `Score: ${this.score}`;
+            }
+            
+            gameOver() {
+                this.running = false;
+                this.gameActive = false;
+                document.removeEventListener('keydown', this.keyHandler);
+                this.scoreElement.textContent = `Game Over! Final Score: ${this.score}`;
+                this.scoreElement.innerHTML += '<br>Press Enter to return to terminal';
+                // Re-enable terminal input
+                const commandInput = document.getElementById('commandInput');
+                if (commandInput) {
+                    commandInput.focus();
+                }
+            }
+        }
+
+        // Function to create ASCII button
+        function createAsciiButton(text, url) {
+            const buttonArt = `
+┌${'─'.repeat(text.length + 2)}┐
+│ ${text} │
+└${'─'.repeat(text.length + 2)}┘`;
+            
+            return `<a href="${url}" target="_blank" class="ascii-button"><pre>${buttonArt}</pre></a>`;
+        }
+
+        // Make BlackjackGame class globally accessible
+        window.BlackjackGame = class {
+            constructor(container) {
+                this.container = container;
+                this.money = 100;
+                this.deck = [];
+                this.playerHand = [];
+                this.dealerHand = [];
+                this.currentBet = 0;
+                this.gamePhase = 'betting'; // betting, playing, dealer, ended
+                
+                this.setupGame();
+                this.initializeDeck();
+            }
+            
+            setupGame() {
+                this.container.innerHTML = `
+                    <div class="blackjack-table">
+                        <div class="dealer-hand"></div>
+                        <div class="player-hand"></div>
+                        <div class="game-info"></div>
+                        <div class="game-controls"></div>
+                    </div>
+                `;
+                
+                this.updateDisplay();
+            }
+            
+            initializeDeck() {
+                const suits = ['♠', '♥', '♦', '♣'];
+                const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+                this.deck = [];
+                
+                for (let suit of suits) {
+                    for (let value of values) {
+                        this.deck.push({ suit, value });
+                    }
+                }
+                
+                this.shuffleDeck();
+            }
+            
+            shuffleDeck() {
+                for (let i = this.deck.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [this.deck[i], this.deck[j]] = [this.deck[j], this.deck[i]];
+                }
+            }
+            
+            createCardAscii(card, hidden = false) {
+                if (hidden) {
+                    return `┌─────────┐
+│░░░░░░░░░│
+│░░░░░░░░░│
+│░░░░░░░░░│
+│░░░░░░░░░│
+└─────────┘`;
+                }
+                
+                const value = card.value.padStart(2, ' ');
+                const suit = card.suit;
+                
+                return `┌─────────┐
+│${value}       │
+│         │
+│    ${suit}    │
+│       ${value}│
+└─────────┘`;
+            }
+            
+            dealCard() {
+                return this.deck.pop();
+            }
+            
+            calculateHand(hand) {
+                let sum = 0;
+                let aces = 0;
+                
+                for (let card of hand) {
+                    if (card.value === 'A') {
+                        aces++;
+                        sum += 11;
+                    } else if (['K', 'Q', 'J'].includes(card.value)) {
+                        sum += 10;
+                    } else {
+                        sum += parseInt(card.value);
+                    }
+                }
+                
+                while (sum > 21 && aces > 0) {
+                    sum -= 10;
+                    aces--;
+                }
+                
+                return sum;
+            }
+            
+            placeBet(amount) {
+                amount = parseInt(amount);
+                if (amount <= this.money && amount > 0 && amount <= 100) {
+                    this.currentBet = amount;
+                    this.money -= amount;
+                    this.startRound();
+                } else {
+                    alert('Invalid bet amount. Please bet between $1 and $100.');
+                }
+            }
+            
+            startRound() {
+                this.gamePhase = 'playing';
+                this.playerHand = [this.dealCard(), this.dealCard()];
+                this.dealerHand = [this.dealCard(), this.dealCard()];
+                this.updateDisplay();
+            }
+            
+            hit() {
+                if (this.gamePhase === 'playing') {
+                    this.playerHand.push(this.dealCard());
+                    if (this.calculateHand(this.playerHand) > 21) {
+                        this.endRound('dealer');
+                    }
+                    this.updateDisplay();
+                }
+            }
+            
+            stand() {
+                if (this.gamePhase === 'playing') {
+                    this.gamePhase = 'dealer';
+                    // Show all cards immediately
+                    this.updateDisplay();
+                    // Add slight delay for dealer's play to show animation
+                    setTimeout(() => {
+                        this.dealerPlay();
+                    }, 500);
+                }
+            }
+            
+            dealerPlay() {
+                let dealerScore = this.calculateHand(this.dealerHand);
+                const playerScore = this.calculateHand(this.playerHand);
+                
+                // Dealer draws cards with delay to show animation
+                const drawCard = () => {
+                    if (dealerScore < 17) {
+                        this.dealerHand.push(this.dealCard());
+                        dealerScore = this.calculateHand(this.dealerHand);
+                        this.updateDisplay();
+                        setTimeout(drawCard, 500);
+                    } else {
+                        // Determine winner after dealer is done drawing
+                        if (dealerScore > 21 || playerScore > dealerScore) {
+                            this.endRound('player');
+                        } else if (dealerScore > playerScore) {
+                            this.endRound('dealer');
+                        } else {
+                            this.endRound('tie');
+                        }
+                    }
+                };
+                
+                // Start the dealer's turn
+                drawCard();
+            }
+            
+            endRound(winner) {
+                this.gamePhase = 'ended';
+                if (winner === 'player') {
+                    this.money += this.currentBet * 2;
+                } else if (winner === 'tie') {
+                    this.money += this.currentBet;
+                }
+                this.updateDisplay(winner);
+            }
+            
+            updateDisplay(winner = null) {
+                if (!this.container) return;
+                
+                const dealerHandDiv = this.container.querySelector('.dealer-hand');
+                const playerHandDiv = this.container.querySelector('.player-hand');
+                const gameInfoDiv = this.container.querySelector('.game-info');
+                const gameControlsDiv = this.container.querySelector('.game-controls');
+                
+                if (!dealerHandDiv || !playerHandDiv || !gameInfoDiv || !gameControlsDiv) return;
+                
+                // Display hands
+                if (this.gamePhase === 'playing') {
+                    dealerHandDiv.innerHTML = `<div class="hand-title">Dealer's Hand:</div><div class="cards-container">${this.dealerHand.map((card, index) => 
+                        `<pre class="card">${index === 1 ? this.createCardAscii(card, true) : this.createCardAscii(card)}</pre>`
+                    ).join('')}</div>`;
+                } else {
+                    dealerHandDiv.innerHTML = `<div class="hand-title">Dealer's Hand (${this.calculateHand(this.dealerHand)}):</div><div class="cards-container">${this.dealerHand.map(card => 
+                        `<pre class="card">${this.createCardAscii(card)}</pre>`
+                    ).join('')}</div>`;
+                }
+                
+                playerHandDiv.innerHTML = `<div class="hand-title">Your Hand (${this.calculateHand(this.playerHand)}):</div><div class="cards-container">${this.playerHand.map(card => 
+                    `<pre class="card">${this.createCardAscii(card)}</pre>`
+                ).join('')}</div>`;
+                
+                // Display game info
+                gameInfoDiv.innerHTML = `
+                    <div>Money: $${this.money}</div>
+                    <div>Current Bet: $${this.currentBet}</div>`;
+                
+                // Display controls based on game phase
+                if (this.gamePhase === 'betting') {
+                    gameControlsDiv.innerHTML = `
+                        <div>Enter bet amount:</div>
+                        <div class="button-container">
+                            <input type="number" min="1" max="${Math.min(this.money, 100)}" value="10" id="betAmount">
+                            <button onclick="window.blackjackGame.placeBet(document.getElementById('betAmount').value)">Place Bet</button>
+                        </div>`;
+                } else if (this.gamePhase === 'playing') {
+                    gameControlsDiv.innerHTML = `
+                        <div>Your turn:</div>
+                        <div class="button-container">
+                            <button onclick="window.blackjackGame.hit()">Hit</button>
+                            <button onclick="window.blackjackGame.stand()">Stand</button>
+                        </div>`;
+                } else if (this.gamePhase === 'dealer') {
+                    gameControlsDiv.innerHTML = `<div>Dealer's turn...</div>`;
+                } else if (this.gamePhase === 'ended') {
+                    let message = '';
+                    if (winner === 'player') message = 'You win!';
+                    else if (winner === 'dealer') message = 'Dealer wins!';
+                    else if (winner === 'tie') message = 'Push - it\'s a tie!';
+                    
+                    gameControlsDiv.innerHTML = `
+                        <div>${message}</div>
+                        <div class="button-container">
+                            <button onclick="window.blackjackGame.newRound()">New Round</button>
+                        </div>`;
+                }
+
+                this.container.style.display = 'block';
+            }
+            
+            newRound() {
+                if (this.money > 0) {
+                    if (this.deck.length < 20) {
+                        this.initializeDeck();
+                    }
+                    this.gamePhase = 'betting';
+                    this.currentBet = 0;
+                    this.playerHand = [];
+                    this.dealerHand = [];
+                    this.updateDisplay();
+                } else {
+                    this.gameOver();
+                }
+            }
+            
+            gameOver() {
+                this.container.innerHTML = `
+                    <div class="game-over">
+                        <h2>Game Over!</h2>
+                        <p>You're out of money!</p>
+                        <button onclick="window.blackjackGame = new window.BlackjackGame(document.querySelector('.blackjack-container'))">Play Again</button>
+                    </div>`;
+            }
+        }
+
+        // Process command
+        async function processCommand(cmd) {
+            const command = cmd.trim().toLowerCase();
+            
+            // Add command to terminal output
+            const commandElement = document.createElement('div');
+            terminal.appendChild(commandElement);
+            commandElement.innerHTML = `<span class="prompt">visitor@shazaan:~$</span> `;
+            await typeEffect(cmd, commandElement, 5);
+            
+            // Create response element
+            const responseElement = document.createElement('div');
+            terminal.appendChild(responseElement);
+            
+            // Handle hidden commands password check
+            if (command === 'hidden') {
+                await typeEffect(contentData.hidden, responseElement);
+                const passwordInput = document.createElement('div');
+                terminal.appendChild(passwordInput);
+                passwordInput.innerHTML = `<span class="prompt">password:</span> `;
+                
+                // Create password input
+                const input = document.createElement('input');
+                input.type = 'password';
+                input.style.background = 'transparent';
+                input.style.border = 'none';
+                input.style.color = 'var(--text-color)';
+                input.style.fontFamily = 'monospace';
+                input.style.outline = 'none';
+                passwordInput.appendChild(input);
+                input.focus();
+
+                // Handle password submission
+                input.addEventListener('keydown', async function(event) {
+                    if (event.key === 'Enter') {
+                        const password = this.value;
+                        passwordInput.removeChild(input);
+                        passwordInput.innerHTML += '•'.repeat(password.length);
+                        
+                        const resultElement = document.createElement('div');
+                        terminal.appendChild(resultElement);
+                        
+                        if (password === HIDDEN_PASSWORD) {
+                            hiddenCommandsUnlocked = true;
+                            await typeEffect(contentData.hiddenHelp, resultElement);
+                        } else {
+                            await typeEffect(contentData.hiddenDenied, resultElement);
+                        }
+                        terminal.scrollTop = terminal.scrollHeight;
+                        document.getElementById('commandInput').focus();
+                    }
+                });
+                return;
+            }
+
+            // Check if hidden command is being accessed
+            const hiddenCommands = ['quote', 'whoami', 'banner', 'snake', 'lyric', 'ye', 'blackjack', 'ascii'];
+            if (hiddenCommands.includes(command) && !hiddenCommandsUnlocked) {
+                response = 'This is a hidden command. Type \'hidden\' and enter the password to unlock hidden commands.';
+                await typeEffect(response, responseElement);
+                terminal.scrollTop = terminal.scrollHeight;
+                return;
+            }
+            
+            // Process different commands
+            let response;
+            switch (command) {
+                case 'help':
+                    response = contentData.help;
+                    break;
+                case 'about':
+                    response = contentData.about;
+                    break;
+                case 'skills':
+                    response = contentData.skills;
+                    break;
+                case 'projects':
+                    response = contentData.projects;
+                    break;
+                case 'experience':
+                    response = contentData.experience;
+                    break;
+                case 'contact':
+                    response = contentData.contact;
+                    break;
+                case 'socials':
+                    response = contentData.socials;
+                    break;
+                case 'quote':
+                    response = contentData.quote();
+                    break;
+                case 'lyric':
+                    response = contentData.lyric();
+                    break;
+                case 'kanye':
+                case 'ye':
+                    playKanyeMusic();
+                    response = '🎵 Playing Kanye West...';
+                    break;
+                case 'whoami':
+                    response = contentData.whoami;
+                    break;
+                case 'banner':
+                    responseElement.classList.add('ascii-art', 'banner');
+                    responseElement.innerHTML = response;
+                    break;
+                case 'ascii':
+                    const name = prompt('Enter a name to generate ASCII art:');
+                    if (name) {
+                        response = generateAsciiArt(name);
+                    } else {
+                        response = 'No name provided.';
+                    }
+                    break;
+                case 'resume':
+                    response = contentData.resume;
+                    // Open resume in new tab
+                    window.open('FinalRes.pdf', '_blank');
+                    break;
+                case 'clear':
+                    terminal.innerHTML = '';
+                    return;
+                case 'ls':
+                    response = contentData.ls;
+                    break;
+                case 'snake':
+                    response = contentData.snake;
+                    await typeEffect(response, responseElement);
+                    terminal.scrollTop = terminal.scrollHeight;
+                    break;
+                case 'links':
+                    responseElement.innerHTML = contentData.links;
+                    break;
+                case 'blackjack':
+                    response = contentData.blackjack;
+                    responseElement.innerHTML = response;
+                    const gameContainer = document.createElement('div');
+                    gameContainer.className = 'blackjack-container';
+                    responseElement.appendChild(gameContainer);
+                    setTimeout(() => {
+                        window.blackjackGame = new window.BlackjackGame(gameContainer);
+                    }, 100);
+                    break;
+                case '':
+                    return;
+                default:
+                    response = contentData.unknown;
+            }
+            
+            // Handle commands that need typing effect
+            if (response && command !== 'links' && command !== 'blackjack') {
+                await typeEffect(response, responseElement);
+            }
+            
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+        
+        // Handle command input
+        commandInput.addEventListener('keydown', async function(event) {
+            if (event.key === 'Enter') {
+                const command = this.value;
+                this.value = '';
+                await processCommand(command);
+            }
+        });
+        
+        // Initialize terminal
+        window.addEventListener('load', async function() {
+            const introElement = document.createElement('div');
+            introElement.classList.add('ascii-art');
+            terminal.appendChild(introElement);
+            await typeEffect(contentData.intro, introElement, 1);
+            terminal.scrollTop = terminal.scrollHeight;
+            commandInput.focus();
+        });
+        
+        // Keep focus on input
+        document.addEventListener('click', function() {
+            commandInput.focus();
+        });
+    </script>
+</body>
+</html> 
